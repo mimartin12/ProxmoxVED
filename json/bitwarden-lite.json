@@ -1,0 +1,96 @@
+{
+  "name": "Bitwarden Lite",
+  "slug": "bitwarden-lite",
+  "categories": [
+    6
+  ],
+  "date_created": "2026-08-25",
+  "type": "ct",
+  "updateable": true,
+  "privileged": false,
+  "architectures": [
+    "amd64",
+    "arm64"
+  ],
+  "interface_port": 443,
+  "documentation": "https://bitwarden.com/help/self-host-an-organization/",
+  "website": "https://bitwarden.com",
+  "repository": "https://github.com/mimartin12/ProxmoxVED",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/bitwarden.webp",
+  "description": "Bitwarden Lite bundles the Bitwarden self-host server (admin, api, identity, icons, notifications) and web vault behind nginx. Not an official Bitwarden script - built by extracting the published ghcr.io/bitwarden/* images and running them as systemd services, since Bitwarden Lite has no native install path.",
+  "install_methods": [
+    {
+      "type": "default",
+      "script": "ct/bitwarden-lite.sh",
+      "config_path": "/opt/bitwarden/bitwarden.env",
+      "resources": {
+        "cpu": 2,
+        "ram": 4096,
+        "hdd": 10,
+        "os": "Debian",
+        "version": "13"
+      }
+    }
+  ],
+  "default_credentials": {
+    "username": null,
+    "password": null
+  },
+  "app_vars": [
+    {
+      "name": "BW_DOMAIN",
+      "label": "Domain",
+      "type": "text",
+      "default": "",
+      "help": "Blank uses the container's IP"
+    },
+    {
+      "name": "BW_DB_PROVIDER",
+      "label": "Database Provider",
+      "type": "select",
+      "options": [
+        "sqlite",
+        "mysql",
+        "postgresql",
+        "sqlserver"
+      ],
+      "default": "sqlite"
+    },
+    {
+      "name": "BW_INSTALL_EMAIL",
+      "label": "Installation Email",
+      "type": "text",
+      "default": "",
+      "help": "Registers a new installation id/key automatically. Leave blank to enter an existing id/key instead."
+    },
+    {
+      "name": "BW_INSTALLATION_ID",
+      "label": "Installation ID",
+      "type": "text",
+      "default": "",
+      "help": "Only used if Installation Email is blank. From https://bitwarden.com/host/, can be set later in bitwarden.env"
+    },
+    {
+      "name": "BW_INSTALLATION_KEY",
+      "label": "Installation Key",
+      "type": "password",
+      "secret": true,
+      "default": "",
+      "help": "Only used if Installation Email is blank. From https://bitwarden.com/host/, can be set later in bitwarden.env"
+    }
+  ],
+  "notes": [
+    {
+      "text": "Not an official Bitwarden script. Bitwarden Lite has no native install path, so this extracts the published ghcr.io/bitwarden/* container images with skopeo (no Docker daemon) and runs each service under systemd.",
+      "type": "info"
+    },
+    {
+      "text": "MS SQL Server has no official Debian repository. This installs it from Microsoft's Ubuntu 22.04 repo on the Debian container as a best-effort, unofficial workaround, amd64 only.",
+      "type": "warning"
+    },
+    {
+      "text": "The core services need a real installation ID and key from https://bitwarden.com/host/ to fully function. Set them in /opt/bitwarden/bitwarden.env and run 'bitwarden-reconfigure'.",
+      "type": "warning"
+    }
+  ]
+}
