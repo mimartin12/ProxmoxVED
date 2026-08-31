@@ -212,48 +212,48 @@ DUO_AKEY=$(openssl rand -hex 30)
 CERT_PASSWORD=$(openssl rand -hex 16)
 
 cat <<EOF >/opt/bitwarden/bitwarden.env
-ASPNETCORE_ENVIRONMENT=Production
-DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
-BW_DOMAIN=${BW_DOMAIN}
-BW_ENABLE_SSL=true
-BW_ENABLE_ADMIN=true
-BW_ENABLE_API=true
-BW_ENABLE_EVENTS=false
-BW_ENABLE_ICONS=true
-BW_ENABLE_IDENTITY=true
-BW_ENABLE_NOTIFICATIONS=true
-BW_ENABLE_SCIM=false
-BW_ENABLE_SSO=false
-globalSettings__selfHosted=true
-globalSettings__liteDeployment=true
-globalSettings__pushRelayBaseUri=https://push.bitwarden.com
-globalSettings__baseServiceUri__vault=https://${BW_DOMAIN}
-globalSettings__baseServiceUri__internalVault=http://localhost:80
-globalSettings__baseServiceUri__internalAdmin=http://localhost:5000
-globalSettings__baseServiceUri__internalApi=http://localhost:5001
-globalSettings__baseServiceUri__internalEvents=http://localhost:5003
-globalSettings__baseServiceUri__internalIcons=http://localhost:5004
-globalSettings__baseServiceUri__internalIdentity=http://localhost:5005
-globalSettings__baseServiceUri__internalNotifications=http://localhost:5006
-globalSettings__baseServiceUri__internalScim=http://localhost:5002
-globalSettings__baseServiceUri__internalSso=http://localhost:5007
-globalSettings__installation__id=${BW_INSTALLATION_ID:-00000000-0000-0000-0000-000000000000}
-globalSettings__installation__key=${BW_INSTALLATION_KEY:-}
-globalSettings__internalIdentityKey=${IDENTITY_KEY}
-globalSettings__oidcIdentityClientKey=${OIDC_CLIENT_KEY}
-globalSettings__duo__aKey=${DUO_AKEY}
-globalSettings__identityServer__certificatePassword=${CERT_PASSWORD}
-globalSettings__databaseProvider=${BW_DB_PROVIDER}
-globalSettings__mysql__connectionString=server=${BW_DB_SERVER:-};port=${BW_DB_PORT:-3306};database=${BW_DB_DATABASE:-};user=${BW_DB_USERNAME:-};password=${BW_DB_PASSWORD:-}
-globalSettings__postgreSql__connectionString=Host=${BW_DB_SERVER:-};Port=${BW_DB_PORT:-5432};Database=${BW_DB_DATABASE:-};Username=${BW_DB_USERNAME:-};Password=${BW_DB_PASSWORD:-}
-globalSettings__sqlServer__connectionString=Server=${BW_DB_SERVER:-},${BW_DB_PORT:-1433};Database=${BW_DB_DATABASE:-};User Id=${BW_DB_USERNAME:-};Password=${BW_DB_PASSWORD:-};Encrypt=True;TrustServerCertificate=True
-globalSettings__sqlite__connectionString=Data Source=${BW_DB_FILE:-/opt/bitwarden/data/vault.db};
-globalSettings__dataProtection__directory=/opt/bitwarden/data/data-protection
-globalSettings__attachment__baseDirectory=/opt/bitwarden/data/attachments
-globalSettings__send__baseDirectory=/opt/bitwarden/data/attachments/send
-globalSettings__licenseDirectory=/opt/bitwarden/data/licenses
-globalSettings__logDirectoryByProject=false
-globalSettings__logRollBySizeLimit=1073741824
+ASPNETCORE_ENVIRONMENT="Production"
+DOTNET_SYSTEM_GLOBALIZATION_INVARIANT="false"
+BW_DOMAIN="${BW_DOMAIN}"
+BW_ENABLE_SSL="true"
+BW_ENABLE_ADMIN="true"
+BW_ENABLE_API="true"
+BW_ENABLE_EVENTS="false"
+BW_ENABLE_ICONS="true"
+BW_ENABLE_IDENTITY="true"
+BW_ENABLE_NOTIFICATIONS="true"
+BW_ENABLE_SCIM="false"
+BW_ENABLE_SSO="false"
+globalSettings__selfHosted="true"
+globalSettings__liteDeployment="true"
+globalSettings__pushRelayBaseUri="https://push.bitwarden.com"
+globalSettings__baseServiceUri__vault="https://${BW_DOMAIN}"
+globalSettings__baseServiceUri__internalVault="http://localhost:80"
+globalSettings__baseServiceUri__internalAdmin="http://localhost:5000"
+globalSettings__baseServiceUri__internalApi="http://localhost:5001"
+globalSettings__baseServiceUri__internalEvents="http://localhost:5003"
+globalSettings__baseServiceUri__internalIcons="http://localhost:5004"
+globalSettings__baseServiceUri__internalIdentity="http://localhost:5005"
+globalSettings__baseServiceUri__internalNotifications="http://localhost:5006"
+globalSettings__baseServiceUri__internalScim="http://localhost:5002"
+globalSettings__baseServiceUri__internalSso="http://localhost:5007"
+globalSettings__installation__id="${BW_INSTALLATION_ID:-00000000-0000-0000-0000-000000000000}"
+globalSettings__installation__key="${BW_INSTALLATION_KEY:-}"
+globalSettings__internalIdentityKey="${IDENTITY_KEY}"
+globalSettings__oidcIdentityClientKey="${OIDC_CLIENT_KEY}"
+globalSettings__duo__aKey="${DUO_AKEY}"
+globalSettings__identityServer__certificatePassword="${CERT_PASSWORD}"
+globalSettings__databaseProvider="${BW_DB_PROVIDER}"
+globalSettings__mysql__connectionString="server=${BW_DB_SERVER:-};port=${BW_DB_PORT:-3306};database=${BW_DB_DATABASE:-};user=${BW_DB_USERNAME:-};password=${BW_DB_PASSWORD:-}"
+globalSettings__postgreSql__connectionString="Host=${BW_DB_SERVER:-};Port=${BW_DB_PORT:-5432};Database=${BW_DB_DATABASE:-};Username=${BW_DB_USERNAME:-};Password=${BW_DB_PASSWORD:-}"
+globalSettings__sqlServer__connectionString="Server=${BW_DB_SERVER:-},${BW_DB_PORT:-1433};Database=${BW_DB_DATABASE:-};User Id=${BW_DB_USERNAME:-};Password=${BW_DB_PASSWORD:-};Encrypt=True;TrustServerCertificate=True"
+globalSettings__sqlite__connectionString="Data Source=${BW_DB_FILE:-/opt/bitwarden/data/vault.db};"
+globalSettings__dataProtection__directory="/opt/bitwarden/data/data-protection"
+globalSettings__attachment__baseDirectory="/opt/bitwarden/data/attachments"
+globalSettings__send__baseDirectory="/opt/bitwarden/data/attachments/send"
+globalSettings__licenseDirectory="/opt/bitwarden/data/licenses"
+globalSettings__logDirectoryByProject="false"
+globalSettings__logRollBySizeLimit="1073741824"
 EOF
 chmod 600 /opt/bitwarden/bitwarden.env
 msg_ok "Wrote Configuration"
