@@ -126,18 +126,27 @@ cat <<'EOF' >/opt/bitwarden/bin/fetch-image.sh
 #!/usr/bin/env bash
 # Extracts /app from a container image without a Docker daemon, matching
 # what bitwarden-lite's Dockerfile does with `COPY --from=<image> /app ...`.
+# Every bitwarden/* image shares the same base layers, so a shared blob dir
+# (skopeo's oci: transport, not dir:) lets skopeo skip re-downloading them
+# for every service - it prints "Skipping blob ... (already present)".
 set -euo pipefail
 image="$1"
 tag="$2"
 dest="$3"
 
+blobs=/opt/bitwarden/bin/.blob-cache
+mkdir -p "$blobs"
+
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
-skopeo copy --remove-signatures "docker://${image}:${tag}" "dir:${work}/img" >/dev/null
+skopeo copy --remove-signatures --dest-shared-blob-dir "$blobs" \
+  "docker://${image}:${tag}" "oci:${work}/img:latest" >/dev/null
+
+manifest_digest=$(jq -r '.manifests[0].digest' "${work}/img/index.json" | sed 's/^sha256://')
 mkdir -p "${work}/rootfs"
-for digest in $(jq -r '.layers[].digest' "${work}/img/manifest.json" | sed 's/^sha256://'); do
-  tar -xf "${work}/img/${digest}" -C "${work}/rootfs"
+for digest in $(jq -r '.layers[].digest' "${blobs}/sha256/${manifest_digest}" | sed 's/^sha256://'); do
+  tar -xf "${blobs}/sha256/${digest}" -C "${work}/rootfs"
 done
 
 rm -rf "$dest"
@@ -150,14 +159,29 @@ cat <<'EOF' >/opt/bitwarden/bin/fetch-all.sh
 #!/usr/bin/env bash
 # Standalone helper (also called from ct/bitwarden-lite.sh's update_script), so it
 # doesn't rely on the framework's msg_info/msg_ok - those aren't sourced here.
+# Fetches run in parallel: they're independent, and serial skopeo pulls were the
+# main reason installs took several minutes.
 set -euo pipefail
 : "${SERVER_TAG:?}" "${WEB_TAG:?}"
+
+pids=()
 for svc in Admin Api Events Icons Identity Notifications Scim Sso; do
-  echo "Fetching ${svc}..."
-  /opt/bitwarden/bin/fetch-image.sh "ghcr.io/bitwarden/${svc,,}" "$SERVER_TAG" "/opt/bitwarden/app/${svc}"
+  ( echo "[${svc}] fetching..."
+    /opt/bitwarden/bin/fetch-image.sh "ghcr.io/bitwarden/${svc,,}" "$SERVER_TAG" "/opt/bitwarden/app/${svc}"
+    echo "[${svc}] done" ) &
+  pids+=("$!")
 done
-echo "Fetching Web Vault..."
-/opt/bitwarden/bin/fetch-image.sh "ghcr.io/bitwarden/web" "$WEB_TAG" "/opt/bitwarden/app/Web"
+( echo "[Web] fetching..."
+  /opt/bitwarden/bin/fetch-image.sh "ghcr.io/bitwarden/web" "$WEB_TAG" "/opt/bitwarden/app/Web"
+  echo "[Web] done" ) &
+pids+=("$!")
+
+status=0
+for pid in "${pids[@]}"; do
+  wait "$pid" || status=1
+done
+((status == 0)) || { echo "One or more image fetches failed" >&2; exit 1; }
+
 echo -n "$SERVER_TAG" >/opt/bitwarden/.server-version
 echo -n "$WEB_TAG" >/opt/bitwarden/.web-version
 EOF
