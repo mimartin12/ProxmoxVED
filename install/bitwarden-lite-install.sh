@@ -26,11 +26,18 @@ $STD apt update
 $STD apt install -y aspnetcore-runtime-10.0
 msg_ok "Installed .NET Runtime"
 
-mkdir -p /opt/bitwarden/{app,data/attachments/send,data/data-protection,data/licenses,bin}
-chmod 700 /opt/bitwarden/data
-# hbs/config.yaml (fetched from bitwarden/self-host) writes to /app/Web/app-id.json,
-# matching the container's filesystem layout. Symlink so it resolves here unmodified.
-ln -sfn /opt/bitwarden/app /app
+# /etc/bitwarden, /var/log/bitwarden and /tmp/bitwarden match bitwarden/self-host's own
+# layout exactly - the vendored nginx/hbs config below hardcodes those paths (e.g.
+# nginx-config.hbs's `alias /etc/bitwarden/attachments/`), so using anything else means
+# patching every fetched file instead of just the parts we actually need to change.
+mkdir -p /opt/bitwarden/{app,bin}
+mkdir -p /etc/bitwarden/{Web,nginx,attachments/send,data-protection,licenses}
+mkdir -p /var/log/bitwarden/nginx /tmp/bitwarden
+chmod 700 /etc/bitwarden
+# nginx-config.hbs hardcodes `root /app/Web`, so it needs to resolve to the same place
+# hbs writes app-id.json (config.yaml's dest is /etc/bitwarden/Web/app-id.json).
+mkdir -p /app
+ln -sfn /etc/bitwarden/Web /app/Web
 
 if [[ -z "${BW_DOMAIN:-}" ]]; then
   read -rp "${TAB3}Domain (blank uses the container IP): " BW_DOMAIN </dev/tty
@@ -112,7 +119,7 @@ sqlserver)
   ;;
 *)
   BW_DB_PROVIDER=sqlite
-  BW_DB_FILE=/opt/bitwarden/data/vault.db
+  BW_DB_FILE=/etc/bitwarden/vault.db
   ;;
 esac
 
@@ -172,7 +179,7 @@ for svc in Admin Api Events Icons Identity Notifications Scim Sso; do
   pids+=("$!")
 done
 ( echo "[Web] fetching..."
-  /opt/bitwarden/bin/fetch-image.sh "ghcr.io/bitwarden/web" "$WEB_TAG" "/opt/bitwarden/app/Web"
+  /opt/bitwarden/bin/fetch-image.sh "ghcr.io/bitwarden/web" "$WEB_TAG" "/etc/bitwarden/Web"
   echo "[Web] done" ) &
 pids+=("$!")
 
@@ -228,7 +235,7 @@ globalSettings__selfHosted="true"
 globalSettings__liteDeployment="true"
 globalSettings__pushRelayBaseUri="https://push.bitwarden.com"
 globalSettings__baseServiceUri__vault="https://${BW_DOMAIN}"
-globalSettings__baseServiceUri__internalVault="http://localhost:80"
+globalSettings__baseServiceUri__internalVault="https://localhost:443"
 globalSettings__baseServiceUri__internalAdmin="http://localhost:5000"
 globalSettings__baseServiceUri__internalApi="http://localhost:5001"
 globalSettings__baseServiceUri__internalEvents="http://localhost:5003"
@@ -247,11 +254,11 @@ globalSettings__databaseProvider="${BW_DB_PROVIDER}"
 globalSettings__mysql__connectionString="server=${BW_DB_SERVER:-};port=${BW_DB_PORT:-3306};database=${BW_DB_DATABASE:-};user=${BW_DB_USERNAME:-};password=${BW_DB_PASSWORD:-}"
 globalSettings__postgreSql__connectionString="Host=${BW_DB_SERVER:-};Port=${BW_DB_PORT:-5432};Database=${BW_DB_DATABASE:-};Username=${BW_DB_USERNAME:-};Password=${BW_DB_PASSWORD:-}"
 globalSettings__sqlServer__connectionString="Server=${BW_DB_SERVER:-},${BW_DB_PORT:-1433};Database=${BW_DB_DATABASE:-};User Id=${BW_DB_USERNAME:-};Password=${BW_DB_PASSWORD:-};Encrypt=True;TrustServerCertificate=True"
-globalSettings__sqlite__connectionString="Data Source=${BW_DB_FILE:-/opt/bitwarden/data/vault.db};"
-globalSettings__dataProtection__directory="/opt/bitwarden/data/data-protection"
-globalSettings__attachment__baseDirectory="/opt/bitwarden/data/attachments"
-globalSettings__send__baseDirectory="/opt/bitwarden/data/attachments/send"
-globalSettings__licenseDirectory="/opt/bitwarden/data/licenses"
+globalSettings__sqlite__connectionString="Data Source=${BW_DB_FILE:-/etc/bitwarden/vault.db};"
+globalSettings__dataProtection__directory="/etc/bitwarden/data-protection"
+globalSettings__attachment__baseDirectory="/etc/bitwarden/attachments"
+globalSettings__send__baseDirectory="/etc/bitwarden/attachments/send"
+globalSettings__licenseDirectory="/etc/bitwarden/licenses"
 globalSettings__logDirectoryByProject="false"
 globalSettings__logRollBySizeLimit="1073741824"
 EOF
@@ -260,29 +267,29 @@ msg_ok "Wrote Configuration"
 
 msg_info "Generating Certificates"
 openssl req -x509 -newkey rsa:4096 -sha256 -nodes -days 36500 \
-  -keyout /opt/bitwarden/data/identity.key -out /opt/bitwarden/data/identity.crt \
+  -keyout /etc/bitwarden/identity.key -out /etc/bitwarden/identity.crt \
   -subj "/CN=Bitwarden IdentityServer"
-openssl pkcs12 -export -out /opt/bitwarden/data/identity.pfx \
-  -inkey /opt/bitwarden/data/identity.key -in /opt/bitwarden/data/identity.crt \
+openssl pkcs12 -export -out /etc/bitwarden/identity.pfx \
+  -inkey /etc/bitwarden/identity.key -in /etc/bitwarden/identity.crt \
   -passout pass:"$CERT_PASSWORD"
-rm -f /opt/bitwarden/data/identity.key /opt/bitwarden/data/identity.crt
-cp /opt/bitwarden/data/identity.pfx /opt/bitwarden/app/Identity/identity.pfx
-cp /opt/bitwarden/data/identity.pfx /opt/bitwarden/app/Sso/identity.pfx
+rm -f /etc/bitwarden/identity.key /etc/bitwarden/identity.crt
+cp /etc/bitwarden/identity.pfx /opt/bitwarden/app/Identity/identity.pfx
+cp /etc/bitwarden/identity.pfx /opt/bitwarden/app/Sso/identity.pfx
 
 TMP_OPENSSL_CONF=$(mktemp)
 cat /etc/ssl/openssl.cnf >"$TMP_OPENSSL_CONF"
 printf "\n[SAN]\nsubjectAltName=DNS:%s\nbasicConstraints=CA:true\n" "$BW_DOMAIN" >>"$TMP_OPENSSL_CONF"
 openssl req -x509 -newkey rsa:4096 -sha256 -nodes -days 36500 \
-  -keyout /opt/bitwarden/data/ssl.key -out /opt/bitwarden/data/ssl.crt \
+  -keyout /etc/bitwarden/ssl.key -out /etc/bitwarden/ssl.crt \
   -reqexts SAN -extensions SAN -config "$TMP_OPENSSL_CONF" \
   -subj "/C=US/ST=California/L=Santa Barbara/O=Bitwarden Inc./OU=Bitwarden/CN=${BW_DOMAIN}"
 rm -f "$TMP_OPENSSL_CONF"
-cp /opt/bitwarden/data/ssl.crt /usr/local/share/ca-certificates/bitwarden.crt
+cp /etc/bitwarden/ssl.crt /usr/local/share/ca-certificates/bitwarden.crt
 update-ca-certificates >/dev/null
 msg_ok "Generated Certificates"
 
 msg_info "Configuring Nginx"
-mkdir -p /etc/hbs /etc/nginx/http.d
+mkdir -p /etc/hbs
 for f in nginx.conf proxy.conf mime.types security-headers.conf security-headers-ssl.conf; do
   curl -fsSL "https://raw.githubusercontent.com/bitwarden/self-host/main/bitwarden-lite/nginx/${f}" -o "/etc/nginx/${f}"
 done
@@ -308,8 +315,6 @@ source /opt/bitwarden/bitwarden.env
 set +a
 /usr/local/bin/hbs
 
-sed -i "s|/var/run/nginx/nginx.pid|/run/nginx.pid|; s|/var/log/nginx|/var/log/bitwarden/nginx|" /etc/nginx/nginx.conf
-mkdir -p /var/log/bitwarden/nginx
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
 msg_ok "Configured Nginx"

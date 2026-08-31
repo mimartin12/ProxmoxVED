@@ -53,7 +53,7 @@ function update_script() {
     bitwarden-identity bitwarden-notifications bitwarden-scim bitwarden-sso 2>/dev/null || true
   msg_ok "Stopped Bitwarden Services"
 
-  create_backup /opt/bitwarden/data /opt/bitwarden/bitwarden.env
+  create_backup /etc/bitwarden /opt/bitwarden/bitwarden.env
 
   SERVER_TAG="$LATEST_SERVER_TAG" WEB_TAG="$LATEST_WEB_TAG" /opt/bitwarden/bin/fetch-all.sh
 
