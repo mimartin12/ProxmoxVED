@@ -221,6 +221,7 @@ set +a
 [[ "${BW_ENABLE_NOTIFICATIONS:-true}" == "true" ]] && echo bitwarden-notifications
 [[ "${BW_ENABLE_SCIM:-false}" == "true" ]] && echo bitwarden-scim
 [[ "${BW_ENABLE_SSO:-false}" == "true" ]] && echo bitwarden-sso
+exit 0
 EOF
 chmod +x /opt/bitwarden/bin/enabled-services.sh
 
