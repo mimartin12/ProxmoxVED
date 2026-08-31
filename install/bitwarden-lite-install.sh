@@ -19,8 +19,8 @@ msg_info "Installing .NET Runtime"
 setup_deb822_repo \
   "microsoft-prod" \
   "https://packages.microsoft.com/keys/microsoft.asc" \
-  "https://packages.microsoft.com/debian/13/prod" \
-  "trixie" \
+  "https://packages.microsoft.com/debian/12/prod" \
+  "bookworm" \
   "main"
 $STD apt update
 $STD apt install -y aspnetcore-runtime-10.0
