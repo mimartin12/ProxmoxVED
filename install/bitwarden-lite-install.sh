@@ -33,12 +33,12 @@ chmod 700 /opt/bitwarden/data
 ln -sfn /opt/bitwarden/app /app
 
 if [[ -z "${BW_DOMAIN:-}" ]]; then
-  read -rp "${TAB3}Domain (blank uses the container IP): " BW_DOMAIN
+  read -rp "${TAB3}Domain (blank uses the container IP): " BW_DOMAIN </dev/tty
 fi
 BW_DOMAIN="${BW_DOMAIN:-$(hostname -I | awk '{print $1}')}"
 
 if [[ -z "${BW_INSTALLATION_ID:-}" ]]; then
-  read -rp "${TAB3}Email to register a new installation id/key (blank to enter one you already have): " BW_INSTALL_EMAIL
+  read -rp "${TAB3}Email to register a new installation id/key (blank to enter one you already have): " BW_INSTALL_EMAIL </dev/tty
   if [[ -n "$BW_INSTALL_EMAIL" ]]; then
     msg_info "Registering Installation"
     INSTALL_PAYLOAD=$(jq -n --arg email "$BW_INSTALL_EMAIL" '{email: $email}')
@@ -48,14 +48,14 @@ if [[ -z "${BW_INSTALLATION_ID:-}" ]]; then
     BW_INSTALLATION_KEY=$(echo "$INSTALL_RESPONSE" | jq -r .key)
     if [[ -z "$BW_INSTALLATION_ID" || "$BW_INSTALLATION_ID" == "null" ]]; then
       msg_error "Failed to register an installation - enter one manually from https://bitwarden.com/host/"
-      read -rp "${TAB3}Installation ID: " BW_INSTALLATION_ID
-      read -rp "${TAB3}Installation Key: " BW_INSTALLATION_KEY
+      read -rp "${TAB3}Installation ID: " BW_INSTALLATION_ID </dev/tty
+      read -rp "${TAB3}Installation Key: " BW_INSTALLATION_KEY </dev/tty
     else
       msg_ok "Registered Installation ${BW_INSTALLATION_ID}"
     fi
   else
-    read -rp "${TAB3}Installation ID: " BW_INSTALLATION_ID
-    read -rp "${TAB3}Installation Key: " BW_INSTALLATION_KEY
+    read -rp "${TAB3}Installation ID: " BW_INSTALLATION_ID </dev/tty
+    read -rp "${TAB3}Installation Key: " BW_INSTALLATION_KEY </dev/tty
   fi
 fi
 
@@ -65,7 +65,7 @@ if [[ -z "${BW_DB_PROVIDER:-}" ]]; then
   echo -e "${TAB3}  2) MariaDB"
   echo -e "${TAB3}  3) PostgreSQL"
   echo -e "${TAB3}  4) MS SQL Server (amd64 only, unofficial - installed from Microsoft's Ubuntu repo, not Debian)"
-  read -rp "${TAB3}Choice [1]: " BW_DB_CHOICE
+  read -rp "${TAB3}Choice [1]: " BW_DB_CHOICE </dev/tty
   case "${BW_DB_CHOICE:-1}" in
   2) BW_DB_PROVIDER=mysql ;;
   3) BW_DB_PROVIDER=postgresql ;;
