@@ -12,7 +12,7 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt install -y skopeo jq openssl unzip nginx
+$STD apt install -y skopeo jq openssl unzip
 msg_ok "Installed Dependencies"
 
 msg_info "Installing .NET Runtime"
@@ -25,6 +25,20 @@ setup_deb822_repo \
 $STD apt update
 $STD apt install -y aspnetcore-runtime-10.0
 msg_ok "Installed .NET Runtime"
+
+msg_info "Installing Nginx"
+# bookworm's own nginx package predates 1.25.1, which lacks the `http2 on;`
+# directive nginx-config.hbs now requires. nginx.org's own repo tracks current
+# releases independent of the Debian release cycle.
+setup_deb822_repo \
+  "nginx" \
+  "https://nginx.org/keys/nginx_signing.key" \
+  "https://nginx.org/packages/debian" \
+  "bookworm" \
+  "nginx"
+$STD apt update
+$STD apt install -y nginx
+msg_ok "Installed Nginx"
 
 # /etc/bitwarden, /var/log/bitwarden and /tmp/bitwarden match bitwarden/self-host's own
 # layout exactly - the vendored nginx/hbs config below hardcodes those paths (e.g.
