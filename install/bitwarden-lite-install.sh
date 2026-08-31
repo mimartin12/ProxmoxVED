@@ -118,8 +118,8 @@ esac
 
 msg_info "Fetching Bitwarden Version Information"
 VERSION_JSON=$(curl -fsSL https://raw.githubusercontent.com/bitwarden/self-host/main/version.json)
-SERVER_TAG=$(echo "$VERSION_JSON" | jq -r .coreVersion)
-WEB_TAG=$(echo "$VERSION_JSON" | jq -r .webVersion)
+SERVER_TAG=$(echo "$VERSION_JSON" | jq -r .versions.coreVersion)
+WEB_TAG=$(echo "$VERSION_JSON" | jq -r .versions.webVersion)
 msg_ok "Fetched Bitwarden Version Information (server ${SERVER_TAG}, web ${WEB_TAG})"
 
 cat <<'EOF' >/opt/bitwarden/bin/fetch-image.sh

@@ -37,8 +37,8 @@ function update_script() {
 
   msg_info "Checking for Updates"
   VERSION_JSON=$(curl -fsSL https://raw.githubusercontent.com/bitwarden/self-host/main/version.json)
-  LATEST_SERVER_TAG=$(echo "$VERSION_JSON" | jq -r .coreVersion)
-  LATEST_WEB_TAG=$(echo "$VERSION_JSON" | jq -r .webVersion)
+  LATEST_SERVER_TAG=$(echo "$VERSION_JSON" | jq -r .versions.coreVersion)
+  LATEST_WEB_TAG=$(echo "$VERSION_JSON" | jq -r .versions.webVersion)
   CURRENT_SERVER_TAG=$(cat /opt/bitwarden/.server-version 2>/dev/null || echo "")
   CURRENT_WEB_TAG=$(cat /opt/bitwarden/.web-version 2>/dev/null || echo "")
 
