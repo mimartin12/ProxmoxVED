@@ -332,6 +332,18 @@ set +a
 
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
+
+# nginx.conf has `daemon off;` (needed so hbs-managed reconfigure can just restart
+# the process), but nginx.org's packaged unit is Type=forking with a PIDFile - it
+# waits forever for a fork that never happens and times out. Match the foreground
+# process nginx.conf actually runs.
+mkdir -p /etc/systemd/system/nginx.service.d
+cat <<'EOF' >/etc/systemd/system/nginx.service.d/override.conf
+[Service]
+Type=simple
+PIDFile=
+EOF
+systemctl daemon-reload
 msg_ok "Configured Nginx"
 
 msg_info "Creating Services"
