@@ -237,6 +237,8 @@ cat <<EOF >/opt/bitwarden/bitwarden.env
 ASPNETCORE_ENVIRONMENT="Production"
 DOTNET_SYSTEM_GLOBALIZATION_INVARIANT="false"
 BW_DOMAIN="${BW_DOMAIN}"
+BW_PORT_HTTP="80"
+BW_PORT_HTTPS="443"
 BW_ENABLE_SSL="true"
 BW_ENABLE_ADMIN="true"
 BW_ENABLE_API="true"
@@ -364,7 +366,7 @@ Type=simple
 WorkingDirectory=/opt/bitwarden/app/${svc}
 EnvironmentFile=/opt/bitwarden/bitwarden.env
 Environment=ASPNETCORE_URLS=http://+:${port}
-ExecStart=/opt/bitwarden/app/${svc}/${svc}
+ExecStart=/usr/bin/dotnet /opt/bitwarden/app/${svc}/${svc}.dll
 Restart=on-failure
 RestartSec=5
 
